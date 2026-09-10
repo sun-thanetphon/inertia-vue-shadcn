@@ -4,13 +4,6 @@ import PlaceholderPattern from "@/components/PlaceholderPattern.vue";
 import { dashboard } from "@/routes";
 import { Button } from "@/components/ui/button";
 
-// const page = usePage();
-// const permissions = page.props.auth.permissions as string[];
-
-// const can = (permission: string) => {
-//     return permissions.includes(permission);
-// };
-
 defineOptions({
     layout: {
         breadcrumbs: [
@@ -38,19 +31,7 @@ defineOptions({
             >
                 Create User
             </Button>
-            <!-- <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-                <Button v-if="can('user.create')" variant="outline">
-                    Create User
-                </Button>
 
-                <Button v-if="can('user.edit')" variant="outline">
-                    Edit User
-                </Button>
-
-                <Button v-if="can('user.delete')" variant="destructive">
-                    Delete User
-                </Button>
-            </div> -->
             <div
                 class="border-sidebar-border/70 dark:border-sidebar-border relative aspect-video overflow-hidden rounded-xl border"
             >
