@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router } from "@inertiajs/vue3";
+import { Head, router, Link } from "@inertiajs/vue3";
 import {
     Table,
     TableBody,
@@ -19,7 +19,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/components/ui/pagination";
-
+import { Button } from "@/components/ui/button";
 interface User {
     id: number;
     name: string;
@@ -64,6 +64,10 @@ const goToPage = (page: number) => {
 
 <template>
     <Head title="User" />
+
+    <Button as-child class="mx-2 mt-2">
+        <Link href="/users/create"> Create user </Link>
+    </Button>
 
     <div class="p-6 space-y-6">
         <Table>
