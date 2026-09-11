@@ -8,6 +8,11 @@ Route::inertia('/', 'Welcome')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
     Route::resource('/users', UserController::class);
+
+    // PoC Calendars
+    Route::inertia('poc/fullcalendar', 'poc/FullCalendar/Index')->name('poc.fullcalendar');
+    Route::inertia('poc/vue-cal', 'poc/VueCal/Index')->name('poc.vue-cal');
 });
 
 require __DIR__ . '/settings.php';
+
