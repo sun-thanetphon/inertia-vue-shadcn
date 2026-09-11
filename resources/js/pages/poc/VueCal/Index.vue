@@ -65,6 +65,28 @@ function toVueCalDate(isoStr: string): string {
     return isoStr.replace('T', ' ').slice(0, 16);
 }
 
+// Safe time formatter for Date objects, extended Vue-Cal dates, or ISO strings
+function formatTime(val: any): string {
+    if (!val) return '';
+    if (typeof val === 'string') {
+        if (val.includes(' ') || val.includes('T')) {
+            const timePart = val.includes('T') ? val.split('T')[1] : val.split(' ')[1];
+            return timePart.slice(0, 5);
+        }
+        return val.slice(0, 5);
+    }
+    if (val instanceof Date) {
+        const hours = String(val.getHours()).padStart(2, '0');
+        const mins = String(val.getMinutes()).padStart(2, '0');
+        return `${hours}:${mins}`;
+    }
+    if (typeof val?.format === 'function') {
+        return val.format('HH:mm');
+    }
+    return '';
+}
+
+
 // 2. Vue-Cal Split Days Configuration (3 Branches Side-by-Side)
 const splitDays = [
     {
@@ -203,7 +225,7 @@ function onEventChange(eventData: any) {
         }
 
         const branch = clinicBranches.find((b) => b.id === apt.branchId);
-        const timeDisplay = apt.start.slice(11, 16);
+        const timeDisplay = formatTime(apt.start);
 
         toast.success('ย้ายเวลานัดหมายสำเร็จ (Drag & Drop)', {
             description: `${apt.patientName}: เวลาใหม่ ${timeDisplay} น. (${branch?.name.split(' (')[0]})`
@@ -560,7 +582,7 @@ function handleMarkAsPaid(appointmentId: string) {
                                         <span class="truncate">{{ event.doctorName?.split(' ')[1] }}</span>
                                     </div>
                                     <span class="font-mono text-[9px] font-bold">
-                                        {{ event.start.slice(11, 16) }} - {{ event.end.slice(11, 16) }}
+                                        {{ formatTime(event.start) }} - {{ formatTime(event.end) }}
                                     </span>
                                 </div>
                             </div>
