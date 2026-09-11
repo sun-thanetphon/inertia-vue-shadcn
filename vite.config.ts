@@ -32,13 +32,21 @@ export default defineConfig({
         }),
     ]),
     server: {
+        host: '0.0.0.0',
+        hmr: {
+            host: 'localhost',
+        },
         watch: {
+            usePolling: true,
             ignored: [
                 '**/.agents/**',
                 '**/.claude/**',
                 '**/.cursor/**',
                 '**/.junie/**',
+                '**/.git/**',
                 '**/vendor/**',
+                '**/node_modules/**',
+                '**/storage/**',
             ],
         },
     },

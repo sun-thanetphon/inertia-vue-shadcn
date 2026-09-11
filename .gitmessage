@@ -1,0 +1,9 @@
+# <type>(<scope>): <subject>
+#
+# Scopes: controller, service, repo, enum, config, docs, test
+#
+# Examples:
+# feat(controller): add processInspection workflow orchestrator
+# feat(service): add isCarReady predicate function
+# feat(repo): add create inspect record atomic method
+# feat(enum): add CarStatus.INSPECTED enum value

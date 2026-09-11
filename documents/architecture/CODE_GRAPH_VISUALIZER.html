@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏛️ Living Architecture Code Graph Visualizer</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0b0f19;
+            color: #e2e8f0;
+            margin: 0;
+            padding: 24px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .badge {
+            background: #1e293b;
+            color: #38bdf8;
+            padding: 6px 12px;
+            border-radius: 9999px;
+            font-size: 13px;
+            border: 1px solid #334155;
+        }
+        .container {
+            background: #111827;
+            border-radius: 12px;
+            border: 1px solid #1f2937;
+            padding: 24px;
+            overflow: auto;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #1e293b;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid #38bdf8;
+        }
+        .stat-card.srv { border-left-color: #34d399; }
+        .stat-card.repo { border-left-color: #a855f7; }
+        .stat-card.enum { border-left-color: #f43f5e; }
+        .stat-title { font-size: 12px; color: #94a3b8; text-transform: uppercase; }
+        .stat-val { font-size: 24px; font-weight: bold; margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>🏛️ Living Architecture Code Graph Visualizer</h1>
+            <p style="color: #64748b; margin: 4px 0 0 0; font-size: 14px;">Automated AST Clean Architecture Visualization</p>
+        </div>
+        <div class="badge">Antigravity IDE 360° Studio</div>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-title">Controllers</div>
+            <div class="stat-val">0</div>
+        </div>
+        <div class="stat-card srv">
+            <div class="stat-title">Services & Predicates</div>
+            <div class="stat-val">0</div>
+        </div>
+        <div class="stat-card repo">
+            <div class="stat-title">Repositories</div>
+            <div class="stat-val">0</div>
+        </div>
+        <div class="stat-card enum">
+            <div class="stat-title">Domain Enums</div>
+            <div class="stat-val">1</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <pre class="mermaid">
+graph LR
+    classDef ctrl fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#fff;
+    classDef srv fill:#0f172a,stroke:#34d399,stroke-width:2px,color:#fff;
+    classDef repo fill:#1e1b4b,stroke:#a855f7,stroke-width:2px,color:#fff;
+    classDef enum fill:#312e81,stroke:#f43f5e,stroke-width:2px,color:#fff;
+    subgraph Enums [🏷️ Domain Enums]
+        E_7806["<b>ProbeType</b><br/>• ARTIFACT<br/>• CONTINUATION<br/>• DECISION<br/>• RECALL"]:::enum
+    end
+    Controllers -. calls .-> Services
+    Services -. mutates .-> Repositories
+    Repositories -. types .-> Enums
+        </pre>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    </script>
+</body>
+</html>

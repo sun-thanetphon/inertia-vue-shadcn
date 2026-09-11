@@ -1,0 +1,27 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clinic_project_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+      - clinic_vendor:/var/www/html/vendor
+      - clinic_node_modules:/var/www/html/node_modules
+    ports:
+      - "8000:8000"
+      - "5173:5173"
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - VITE_HOST=0.0.0.0
+      - PHP_CLI_SERVER_WORKERS=8
+      - BOOST_BROWSER_LOGS_WATCHER=false
+    command: php artisan dev --inline
+
+volumes:
+  clinic_vendor:
+  clinic_node_modules:
