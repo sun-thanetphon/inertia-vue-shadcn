@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
+import { useBreakpoints, breakpointsTailwind } from '@vueuse/core';
 import VueCal from 'vue-cal';
 import 'vue-cal/dist/vuecal.css';
 import 'vue-cal/dist/drag-and-drop.es.js';
@@ -51,6 +52,17 @@ const searchQuery = ref<string>('');
 const isSplitViewMode = ref<boolean>(true); // Split days toggle
 const activeView = ref<'week' | 'day' | 'month'>('week');
 const vueCalRef = ref<any>(null);
+
+// Responsive Breakpoints: Auto adapt to mobile (< 768px)
+const breakpoints = useBreakpoints(breakpointsTailwind);
+const isMobile = breakpoints.smaller('md');
+
+onMounted(() => {
+    if (isMobile.value) {
+        activeView.value = 'day';
+        vueCalRef.value?.switchView('day');
+    }
+});
 
 // Dialogs state
 const isBillingOpen = ref(false);
@@ -227,7 +239,7 @@ function onEventChange(eventData: any) {
     }
 }
 
-// 6. Navigation Controls for Vue-Cal
+// 6. Navigation & View Switcher Controls for Vue-Cal
 function previousPeriod() {
     vueCalRef.value?.previous();
 }
@@ -239,6 +251,53 @@ function nextPeriod() {
 function goToToday() {
     vueCalRef.value?.switchView(activeView.value, new Date());
 }
+
+function handleSwitchView(view: 'day' | 'week' | 'month') {
+    activeView.value = view;
+    vueCalRef.value?.switchView(view);
+}
+
+function onViewChange(viewData: any) {
+    if (viewData?.view && ['day', 'week', 'month'].includes(viewData.view)) {
+        activeView.value = viewData.view;
+    }
+}
+
+function toggleSplitView() {
+    if (activeView.value === 'month') return;
+    isSplitViewMode.value = !isSplitViewMode.value;
+    toast.info(isSplitViewMode.value ? 'เปิดการแสดงผลแยกเสาสาขา' : 'สลับเป็นการแสดงผลคอลัมน์รวมทุกสาขา', {
+        duration: 2000,
+    });
+}
+
+// Responsive min widths for Vue-Cal to prevent column squishing
+const minSplitWidth = computed(() => {
+    if (!isSplitViewMode.value || selectedBranchId.value !== 'all') {
+        return 0;
+    }
+    // In Week view with all branches split (7 days * 3 branches = 21 columns):
+    // Force minimum 160px per split column to enable horizontal scrolling and prevent text squashing
+    if (activeView.value === 'week') {
+        return 160;
+    }
+    // In Day view: on mobile (< 640px) enforce 140px, on desktop 0 allows natural flex distribution
+    if (isMobile.value) {
+        return 140;
+    }
+    return 0;
+});
+
+const minCellWidth = computed(() => {
+    if (activeView.value === 'week') {
+        if (isSplitViewMode.value && selectedBranchId.value === 'all') {
+            return 480; // 3 splits * 160px
+        }
+        // In unified week view, ensure each day has at least 130px on small screens
+        return 130;
+    }
+    return 0;
+});
 
 // 7. Actions & Modal Handlers
 function handleOpenBilling(event: any) {
@@ -283,7 +342,7 @@ function handleMarkAsPaid(appointmentId: string) {
 <template>
     <Head title="ตารางนัดหมายคลินิก - Vue-Cal Scheduler" />
 
-    <div class="flex-1 space-y-3.5 p-4 md:p-5 max-w-[1720px] mx-auto min-h-screen flex flex-col justify-start">
+    <div class="flex-1 min-w-0 w-full max-w-full space-y-3.5 p-4 md:p-5 mx-auto min-h-screen flex flex-col justify-start overflow-x-hidden">
         <!-- 1. Header Bar: Title + Context + Actions -->
         <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-3">
             <div class="flex items-center gap-2.5">
@@ -382,10 +441,11 @@ function handleMarkAsPaid(appointmentId: string) {
         </section>
 
         <!-- 3. Unified Ergonomic Control Toolbar (Date Navigation + Filters + View Controls) -->
-        <nav aria-label="Calendar Navigation and Filters" class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 p-2 rounded-lg border bg-card">
-            <!-- Left: Date Navigator -->
-            <div class="flex items-center gap-1.5">
-                <div class="flex items-center border rounded-md overflow-hidden bg-background">
+        <nav aria-label="Calendar Navigation and Filters" class="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-2.5 p-2.5 rounded-lg border bg-card shadow-xs">
+            <!-- Left Group: Date Navigation + View Mode Switcher + Split Switcher -->
+            <div class="flex flex-wrap items-center justify-between sm:justify-start gap-2">
+                <!-- Date Navigator -->
+                <div class="flex items-center border rounded-md overflow-hidden bg-background shadow-2xs">
                     <button
                         type="button"
                         @click="previousPeriod"
@@ -397,7 +457,7 @@ function handleMarkAsPaid(appointmentId: string) {
                     <button
                         type="button"
                         @click="goToToday"
-                        class="px-2.5 py-1 text-xs font-semibold hover:bg-muted text-foreground transition-colors"
+                        class="px-3 py-1 text-xs font-semibold hover:bg-muted text-foreground transition-colors"
                     >
                         วันนี้
                     </button>
@@ -410,13 +470,60 @@ function handleMarkAsPaid(appointmentId: string) {
                         <ChevronRight class="size-4" />
                     </button>
                 </div>
+
+                <!-- View Mode Segmented Switcher (Day, Week, Month) -->
+                <div class="inline-flex items-center p-0.5 rounded-md border bg-muted/60 text-muted-foreground text-xs font-semibold">
+                    <button
+                        type="button"
+                        @click="handleSwitchView('day')"
+                        class="px-2.5 py-1 rounded transition-all"
+                        :class="activeView === 'day' ? 'bg-background text-foreground shadow-xs font-bold' : 'hover:text-foreground'"
+                    >
+                        วัน
+                    </button>
+                    <button
+                        type="button"
+                        @click="handleSwitchView('week')"
+                        class="px-2.5 py-1 rounded transition-all"
+                        :class="activeView === 'week' ? 'bg-background text-foreground shadow-xs font-bold' : 'hover:text-foreground'"
+                    >
+                        สัปดาห์
+                    </button>
+                    <button
+                        type="button"
+                        @click="handleSwitchView('month')"
+                        class="px-2.5 py-1 rounded transition-all"
+                        :class="activeView === 'month' ? 'bg-background text-foreground shadow-xs font-bold' : 'hover:text-foreground'"
+                    >
+                        เดือน
+                    </button>
+                </div>
+
+                <!-- Split Days Toggle -->
+                <button
+                    type="button"
+                    @click="toggleSplitView"
+                    :disabled="activeView === 'month'"
+                    class="h-8 px-2.5 rounded-md border text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                    :class="[
+                        activeView === 'month' ? 'opacity-50 cursor-not-allowed bg-muted text-muted-foreground border-border' :
+                        isSplitViewMode
+                            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-300'
+                            : 'bg-background border-border text-muted-foreground hover:bg-muted'
+                    ]"
+                    :title="activeView === 'month' ? 'มุมมองเดือนไม่รองรับการแยกเสาสาขา' : (isSplitViewMode ? 'สลับเป็นมุมมองรวมทุกสาขา' : 'สลับเป็นมุมมองแยกเสาสาขา')"
+                >
+                    <Columns3 class="size-3.5" />
+                    <span class="hidden sm:inline">{{ isSplitViewMode ? 'แยกเสาสาขา' : 'รวมทุกสาขา' }}</span>
+                    <span class="sm:hidden">{{ isSplitViewMode ? 'แยกเสา' : 'รวม' }}</span>
+                </button>
             </div>
 
-            <!-- Center: Filters (Branch, Doctor, Live Search) -->
+            <!-- Right Group: Filters (Branch, Doctor, Live Search) -->
             <div class="flex flex-wrap items-center gap-2">
                 <!-- Branch Filter -->
                 <Select v-model="selectedBranchId">
-                    <SelectTrigger class="w-[170px] h-8 text-xs bg-background">
+                    <SelectTrigger class="w-full sm:w-[165px] h-8 text-xs bg-background">
                         <SelectValue placeholder="กรองสาขา" />
                     </SelectTrigger>
                     <SelectContent>
@@ -438,7 +545,7 @@ function handleMarkAsPaid(appointmentId: string) {
 
                 <!-- Doctor Filter -->
                 <Select v-model="selectedDoctorId">
-                    <SelectTrigger class="w-[165px] h-8 text-xs bg-background">
+                    <SelectTrigger class="w-full sm:w-[160px] h-8 text-xs bg-background">
                         <SelectValue placeholder="แพทย์ทุกคน" />
                     </SelectTrigger>
                     <SelectContent>
@@ -456,36 +563,19 @@ function handleMarkAsPaid(appointmentId: string) {
                 </Select>
 
                 <!-- Live Search Box -->
-                <div class="relative w-[180px]">
+                <div class="relative w-full sm:w-[175px]">
                     <Search class="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                     <Input
                         v-model="searchQuery"
                         placeholder="ค้นหาคนไข้..."
-                        class="h-8 pl-8 text-xs bg-background"
+                        class="h-8 pl-8 text-xs bg-background w-full"
                     />
                 </div>
-            </div>
-
-            <!-- Right: View Modes & Split Switcher -->
-            <div class="flex items-center gap-1.5">
-                <!-- Split Days Toggle -->
-                <button
-                    type="button"
-                    @click="isSplitViewMode = !isSplitViewMode"
-                    class="h-8 px-2.5 rounded-md border text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                    :class="isSplitViewMode
-                        ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-300'
-                        : 'bg-background border-border text-muted-foreground hover:bg-muted'"
-                    title="สลับโหมดเสาสาขาคู่ขนาน"
-                >
-                    <Columns3 class="size-3.5" />
-                    <span>{{ isSplitViewMode ? 'เสาสาขา (Split)' : 'คอลัมน์รวม' }}</span>
-                </button>
             </div>
         </nav>
 
         <!-- 4. The Master Vue-Cal Calendar Canvas -->
-        <main class="flex-1 rounded-lg border bg-card overflow-hidden shadow-xs vuecal-clinic-master-wrapper">
+        <main class="flex-1 min-w-0 w-full max-w-full rounded-lg border bg-card overflow-hidden shadow-xs vuecal-clinic-master-wrapper">
             <vue-cal
                 ref="vueCalRef"
                 class="vuecal--clinic-theme"
@@ -498,30 +588,33 @@ function handleMarkAsPaid(appointmentId: string) {
                 :events="vueCalEvents"
                 :split-days="isSplitViewMode && selectedBranchId === 'all' ? splitDays : []"
                 :sticky-split-labels="true"
+                :min-split-width="minSplitWidth"
+                :min-cell-width="minCellWidth"
                 :editable-events="{ title: false, drag: true, resize: true, delete: false, create: false }"
                 :drag-to-create-event="false"
                 @event-change="onEventChange"
                 @event-drop="onEventChange"
                 @cell-click="handleCellClick"
+                @view-change="onViewChange"
             >
                 <!-- 🎯 Split Column Header Slot -->
                 <template #split-label="{ split }">
-                    <div class="flex items-center justify-between px-2.5 py-1.5 border-b border-border/80 bg-muted/40 text-left">
-                        <div class="flex items-center gap-1.5 min-w-0">
+                    <div class="flex items-center justify-between px-2 py-1.5 border-b border-border/80 bg-muted/30 text-left w-full overflow-hidden">
+                        <div class="flex items-center gap-1.5 min-w-0 flex-1">
                             <span
                                 class="size-2 rounded-full shrink-0"
                                 :style="{ backgroundColor: split.color }"
                             />
-                            <div class="min-w-0">
-                                <div class="font-bold text-xs text-foreground truncate">
+                            <div class="min-w-0 flex-1">
+                                <div class="font-bold text-xs text-foreground truncate" :title="split.label">
                                     {{ split.label }}
                                 </div>
-                                <div class="text-[10px] text-muted-foreground truncate">
+                                <div class="text-[10px] text-muted-foreground truncate hidden sm:block" :title="split.sublabel">
                                     {{ split.sublabel }}
                                 </div>
                             </div>
                         </div>
-                        <span class="text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded bg-background border text-muted-foreground shrink-0">
+                        <span class="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-background border text-muted-foreground shrink-0 ml-1">
                             {{ getBranchAppointmentCount(split.branchKey) }}
                         </span>
                     </div>
@@ -539,24 +632,24 @@ function handleMarkAsPaid(appointmentId: string) {
                         @click="handleEditAppointment(event)"
                     >
                         <!-- Header Row: Patient Name & Status -->
-                        <div class="space-y-1">
+                        <div class="space-y-1 min-w-0">
                             <div class="flex items-center justify-between gap-1">
                                 <!-- Patient Name with Initial Tag -->
-                                <div class="flex items-center gap-1.5 min-w-0">
+                                <div class="flex items-center gap-1.5 min-w-0 flex-1">
                                     <span
                                         class="size-4.5 rounded text-[9px] font-black flex items-center justify-center shrink-0 leading-none"
                                         :class="event.status === 'paid' ? 'bg-emerald-600 text-white' : 'bg-primary/10 text-primary'"
                                     >
                                         {{ event.patientName?.slice(0, 1) }}
                                     </span>
-                                    <span class="font-bold text-xs truncate leading-tight">
+                                    <span class="font-bold text-xs truncate leading-tight flex-1" :title="event.patientName">
                                         {{ event.patientName }}
                                     </span>
                                 </div>
 
                                 <!-- Semantic Status Dot / Tag -->
                                 <span
-                                    class="text-[9px] font-semibold px-1.5 py-0.2 rounded shrink-0 flex items-center gap-1"
+                                    class="text-[9px] font-semibold px-1.5 py-0.5 rounded shrink-0 flex items-center gap-1"
                                     :class="event.status === 'paid'
                                         ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
                                         : 'bg-amber-500/15 text-amber-700 dark:text-amber-400'"
@@ -565,19 +658,25 @@ function handleMarkAsPaid(appointmentId: string) {
                                         class="size-1.5 rounded-full"
                                         :class="event.status === 'paid' ? 'bg-emerald-600' : 'bg-amber-500 animate-pulse'"
                                     />
-                                    <span>{{ event.status === 'paid' ? 'ชำระแล้ว' : 'รอออกบิล' }}</span>
+                                    <span class="hidden xs:inline">{{ event.status === 'paid' ? 'ชำระแล้ว' : 'รอออกบิล' }}</span>
                                 </span>
                             </div>
 
+                            <!-- In unified mode (not split), show branch badge! -->
+                            <div v-if="!isSplitViewMode || selectedBranchId !== 'all'" class="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                <span class="size-1.5 rounded-full" :style="{ backgroundColor: event.branchColor }" />
+                                <span class="truncate font-medium">{{ event.branchName }}</span>
+                            </div>
+
                             <!-- Treatment & Doctor -->
-                            <div class="text-[11px] font-semibold truncate leading-tight" :class="event.status === 'paid' ? 'text-emerald-800 dark:text-emerald-200' : 'text-foreground'">
+                            <div class="text-[11px] font-semibold truncate leading-tight" :class="event.status === 'paid' ? 'text-emerald-800 dark:text-emerald-200' : 'text-foreground'" :title="event.title">
                                 {{ event.title }}
                             </div>
 
-                            <div class="flex items-center justify-between text-[10px] text-muted-foreground leading-tight">
-                                <span class="truncate">👨‍⚕️ {{ event.doctorName?.split(' ')[1] }}</span>
+                            <div class="flex items-center justify-between text-[10px] text-muted-foreground leading-tight gap-1">
+                                <span class="truncate">👨‍⚕️ {{ event.doctorName?.split(' ')[1] || event.doctorName }}</span>
                                 <span class="font-mono text-[9px] font-bold text-muted-foreground shrink-0">
-                                    {{ formatTime(event.start) }} - {{ formatTime(event.end) }}
+                                    {{ formatTime(event.start) }}-{{ formatTime(event.end) }}
                                 </span>
                             </div>
                         </div>
@@ -621,7 +720,7 @@ function handleMarkAsPaid(appointmentId: string) {
 
         <!-- 5. Quiet Ergonomic Assist Footer -->
         <footer class="flex flex-wrap items-center justify-between gap-3 text-[11px] text-muted-foreground px-2">
-            <div class="flex items-center gap-4">
+            <div class="flex flex-wrap items-center gap-4">
                 <span class="flex items-center gap-1">
                     <Move class="size-3 text-emerald-600" />
                     <span>ลากกล่องเพื่อเลื่อนเวลาหรือย้ายสาขา</span>
@@ -633,6 +732,10 @@ function handleMarkAsPaid(appointmentId: string) {
                 <span class="flex items-center gap-1">
                     <CreditCard class="size-3 text-emerald-600" />
                     <span>คลิกออกบิลเพื่อตัดชำระเงิน</span>
+                </span>
+                <span v-if="activeView === 'week' && isSplitViewMode && selectedBranchId === 'all'" class="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                    <Move class="size-3" />
+                    <span>เลื่อนซ้าย-ขวาเพื่อดูสาขาในแต่ละวัน (21 คอลัมน์)</span>
                 </span>
             </div>
             <span class="font-mono text-[10px]">
@@ -659,6 +762,14 @@ function handleMarkAsPaid(appointmentId: string) {
 
 <style>
 /* Vue-Cal Clinic Master Theme - Ultra Clean & Seamless Theme Sync */
+.vuecal-clinic-master-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+
 .vuecal-clinic-master-wrapper .vuecal {
     height: calc(100vh - 250px);
     min-height: 680px;
@@ -685,6 +796,24 @@ function handleMarkAsPaid(appointmentId: string) {
     display: none;
 }
 
+/* Horizontal & Vertical scrollbar styling */
+.vuecal-clinic-master-wrapper .vuecal__cells::-webkit-scrollbar,
+.vuecal-clinic-master-wrapper .vuecal__bg::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+}
+
+.vuecal-clinic-master-wrapper .vuecal__cells::-webkit-scrollbar-track,
+.vuecal-clinic-master-wrapper .vuecal__bg::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.vuecal-clinic-master-wrapper .vuecal__cells::-webkit-scrollbar-thumb,
+.vuecal-clinic-master-wrapper .vuecal__bg::-webkit-scrollbar-thumb {
+    background-color: var(--border, #cbd5e1);
+    border-radius: 9999px;
+}
+
 /* Time column gutter */
 .vuecal-clinic-master-wrapper .vuecal__time-cell-line {
     border-top: 1px solid var(--border, #e2e8f0);
@@ -697,6 +826,8 @@ function handleMarkAsPaid(appointmentId: string) {
     font-family: monospace;
     color: var(--muted-foreground, #64748b);
     border-right: 1px solid var(--border, #e2e8f0);
+    background-color: var(--card, #ffffff);
+    z-index: 5;
 }
 
 /* Event Box General Overrides */
@@ -723,11 +854,23 @@ function handleMarkAsPaid(appointmentId: string) {
 /* Day Heading */
 .vuecal-clinic-master-wrapper .vuecal__weekdays-headings {
     border-bottom: 1px solid var(--border, #e2e8f0);
+    background-color: var(--card, #ffffff);
 }
 
 .vuecal-clinic-master-wrapper .vuecal__heading {
     font-weight: 700;
     font-size: 0.8rem;
     padding: 6px 0;
+}
+
+/* Split day headers */
+.vuecal-clinic-master-wrapper .vuecal__split-days-headers {
+    border-bottom: 1px solid var(--border, #e2e8f0);
+    background-color: var(--muted, #f8fafc);
+}
+
+.vuecal-clinic-master-wrapper .day-split-header {
+    font-size: 0.75rem;
+    overflow: hidden;
 }
 </style>
