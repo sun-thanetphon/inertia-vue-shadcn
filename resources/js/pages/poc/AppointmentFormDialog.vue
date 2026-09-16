@@ -139,33 +139,35 @@ function handleSave() {
 
             <form @submit.prevent="handleSave" class="space-y-3.5 py-2">
                 <!-- Patient Name & Phone -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="space-y-1.5 min-w-0">
                         <Label for="patientName" class="text-xs">ชื่อ-นามสกุล คนไข้ *</Label>
                         <Input
                             id="patientName"
                             v-model="form.patientName"
                             placeholder="เช่น นาย สมชาย ใจดี"
+                            class="w-full"
                             required
                         />
                     </div>
-                    <div class="space-y-1.5">
+                    <div class="space-y-1.5 min-w-0">
                         <Label for="patientPhone" class="text-xs">เบอร์โทรศัพท์</Label>
                         <Input
                             id="patientPhone"
                             v-model="form.patientPhone"
                             placeholder="081-234-5678"
+                            class="w-full"
                         />
                     </div>
                 </div>
 
                 <!-- Branch & Doctor -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="space-y-1.5 min-w-0">
                         <Label class="text-xs">สาขาคลินิก *</Label>
                         <Select v-model="form.branchId">
-                            <SelectTrigger>
-                                <SelectValue placeholder="เลือกสาขา" />
+                            <SelectTrigger class="w-full">
+                                <SelectValue placeholder="เลือกสาขา" class="truncate" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem
@@ -179,11 +181,11 @@ function handleSave() {
                         </Select>
                     </div>
 
-                    <div class="space-y-1.5">
+                    <div class="space-y-1.5 min-w-0">
                         <Label class="text-xs">แพทย์ผู้ตรวจ *</Label>
                         <Select v-model="form.doctorName">
-                            <SelectTrigger>
-                                <SelectValue placeholder="เลือกแพทย์" />
+                            <SelectTrigger class="w-full">
+                                <SelectValue placeholder="เลือกแพทย์" class="truncate" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem
@@ -199,11 +201,11 @@ function handleSave() {
                 </div>
 
                 <!-- Treatment & Price -->
-                <div class="space-y-1.5">
+                <div class="space-y-1.5 min-w-0">
                     <Label class="text-xs">บริการ / การรักษา *</Label>
                     <Select :model-value="form.treatment" @update:model-value="onTreatmentChange">
-                        <SelectTrigger>
-                            <SelectValue placeholder="เลือกการรักษา" />
+                        <SelectTrigger class="w-full">
+                            <SelectValue placeholder="เลือกการรักษา" class="truncate" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem
@@ -218,34 +220,37 @@ function handleSave() {
                 </div>
 
                 <!-- Start & End Time -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="space-y-1.5 min-w-0">
                         <Label for="startTime" class="text-xs">เวลาเริ่มต้น *</Label>
                         <Input
                             id="startTime"
                             type="datetime-local"
                             v-model="form.start"
+                            class="w-full"
                             required
                         />
                     </div>
-                    <div class="space-y-1.5">
+                    <div class="space-y-1.5 min-w-0">
                         <Label for="endTime" class="text-xs">เวลาสิ้นสุด *</Label>
                         <Input
                             id="endTime"
                             type="datetime-local"
                             v-model="form.end"
+                            class="w-full"
                             required
                         />
                     </div>
                 </div>
 
                 <!-- Notes -->
-                <div class="space-y-1.5">
+                <div class="space-y-1.5 min-w-0">
                     <Label for="notes" class="text-xs">หมายเหตุเพิ่มเติม</Label>
                     <Input
                         id="notes"
                         v-model="form.notes"
                         placeholder="เช่น คนไข้มีประวัติแพ้ยา หรือต้องการตรวจพิเศษ"
+                        class="w-full"
                     />
                 </div>
 
