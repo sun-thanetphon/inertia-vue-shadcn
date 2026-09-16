@@ -9,7 +9,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { LoaderCircle, IdCard, User, ShieldAlert } from "lucide-vue-next";
+import { LoaderCircle, IdCard, User, ShieldAlert } from "@lucide/vue";
 
 // รับ props เพิ่มเติม ทั้ง cardData และ error จาก Controller
 const props = defineProps<{
