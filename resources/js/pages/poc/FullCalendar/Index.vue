@@ -26,12 +26,15 @@ import {
     Move,
     Phone,
     Plus,
+    Users,
+    ArrowUpRight,
 } from '@lucide/vue';
 
 import type { Appointment } from '../mockData';
 import { clinicBranches, getInitialAppointments } from '../mockData';
 import BillingDialog from '../BillingDialog.vue';
 import AppointmentFormDialog from '../AppointmentFormDialog.vue';
+import ConcurrentAppointmentsDialog from './ConcurrentAppointmentsDialog.vue';
 
 // 1. Reactive State
 const appointments = ref<Appointment[]>(getInitialAppointments());
@@ -60,6 +63,12 @@ const selectedBillingAppointment = ref<Appointment | null>(null);
 const isFormOpen = ref(false);
 const editingAppointment = ref<Appointment | null>(null);
 const formInitialDate = ref<string>('');
+
+// Concurrent / Cluster appointments state
+const isClusterMode = ref(true); // Default to cluster mode for clean, un-squished cards!
+const isClusterDialogOpen = ref(false);
+const selectedClusterAppointments = ref<Appointment[]>([]);
+const selectedClusterTimeSlot = ref<string>('');
 
 // Format & Initials helpers
 function getInitials(name: string): string {
@@ -114,24 +123,125 @@ const branchPills = computed(() => [
     })),
 ]);
 
+// Algorithm to detect and group overlapping appointments
+function groupOverlappingAppointments(apts: Appointment[]): Appointment[][] {
+    if (apts.length === 0) return [];
+    const sorted = [...apts].sort(
+        (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime(),
+    );
+    const groups: Appointment[][] = [];
+    let currentGroup: Appointment[] = [sorted[0]];
+    let currentGroupEnd = new Date(sorted[0].end).getTime();
+
+    for (let i = 1; i < sorted.length; i++) {
+        const apt = sorted[i];
+        const aptStart = new Date(apt.start).getTime();
+        const aptEnd = new Date(apt.end).getTime();
+
+        const sameDay =
+            new Date(apt.start).toDateString() ===
+            new Date(currentGroup[0].start).toDateString();
+
+        if (sameDay && aptStart < currentGroupEnd) {
+            currentGroup.push(apt);
+            if (aptEnd > currentGroupEnd) {
+                currentGroupEnd = aptEnd;
+            }
+        } else {
+            groups.push(currentGroup);
+            currentGroup = [apt];
+            currentGroupEnd = aptEnd;
+        }
+    }
+    if (currentGroup.length > 0) {
+        groups.push(currentGroup);
+    }
+    return groups;
+}
+
 // Map to FullCalendar Event Format
 const calendarEvents = computed(() => {
-    return filteredAppointments.value.map((apt) => {
-        const branch = clinicBranches.find((b) => b.id === apt.branchId);
-        return {
-            id: apt.id,
-            title: apt.title,
-            start: apt.start,
-            end: apt.end,
-            backgroundColor: 'transparent',
-            borderColor: 'transparent',
-            extendedProps: {
-                ...apt,
-                branchName: branch?.name.split(' (')[0] || '',
-                branchColor: branch?.color || '#3b82f6',
-            },
-        };
+    if (!isClusterMode.value) {
+        // Normal individual events (Split columns mode)
+        return filteredAppointments.value.map((apt) => {
+            const branch = clinicBranches.find((b) => b.id === apt.branchId);
+            return {
+                id: apt.id,
+                title: apt.title,
+                start: apt.start,
+                end: apt.end,
+                backgroundColor: 'transparent',
+                borderColor: 'transparent',
+                extendedProps: {
+                    isCluster: false,
+                    ...apt,
+                    branchName: branch?.name.split(' (')[0] || '',
+                    branchColor: branch?.color || '#3b82f6',
+                },
+            };
+        });
+    }
+
+    // Cluster Mode: Group overlapping appointments into unified summary blocks
+    const groups = groupOverlappingAppointments(filteredAppointments.value);
+    const events: any[] = [];
+
+    groups.forEach((group) => {
+        if (group.length === 1) {
+            const apt = group[0];
+            const branch = clinicBranches.find((b) => b.id === apt.branchId);
+            events.push({
+                id: apt.id,
+                title: apt.title,
+                start: apt.start,
+                end: apt.end,
+                backgroundColor: 'transparent',
+                borderColor: 'transparent',
+                extendedProps: {
+                    isCluster: false,
+                    ...apt,
+                    branchName: branch?.name.split(' (')[0] || '',
+                    branchColor: branch?.color || '#3b82f6',
+                },
+            });
+        } else {
+            // Overlapping cluster
+            const earliestStart = group.reduce(
+                (min, a) => (a.start < min ? a.start : min),
+                group[0].start,
+            );
+            const latestEnd = group.reduce(
+                (max, a) => (a.end > max ? a.end : max),
+                group[0].end,
+            );
+            const branchColors = Array.from(
+                new Set(
+                    group.map(
+                        (a) =>
+                            clinicBranches.find((b) => b.id === a.branchId)
+                                ?.color || '#3b82f6',
+                    ),
+                ),
+            );
+
+            events.push({
+                id: `cluster-${group.map((a) => a.id).join('-')}`,
+                title: `${group.length} นัดหมายซ้อนทับ`,
+                start: earliestStart,
+                end: latestEnd,
+                backgroundColor: 'transparent',
+                borderColor: 'transparent',
+                extendedProps: {
+                    isCluster: true,
+                    count: group.length,
+                    appointments: group,
+                    branchColors,
+                },
+            });
+        }
     });
+
+    return events;
 });
 
 // 3. FullCalendar Configuration
@@ -152,6 +262,7 @@ const calendarOptions = computed(() => ({
     slotMinTime: '08:00:00',
     slotMaxTime: '20:00:00',
     slotDuration: '00:30:00',
+    slotEventOverlap: false, // จัดการนัดหมายที่เวลาชนกันให้แบ่งคอลัมน์คู่ขนาน (Side-by-side) ไม่ทับซ้อนกัน
     allDaySlot: false,
     height: 'auto',
     expandRows: true,
@@ -167,6 +278,13 @@ const calendarOptions = computed(() => ({
 
     // Drag & Drop Handler (ลากวางเลื่อนเวลานัดหมาย)
     eventDrop: (info: any) => {
+        if (info.event.extendedProps?.isCluster) {
+            info.revert();
+            toast.warning('ไม่สามารถลากย้ายแบบกลุ่มได้', {
+                description: 'กรุณาแตะที่การ์ดเพื่อแยกปรับเวลาของแต่ละนัดหมาย',
+            });
+            return;
+        }
         const apt = appointments.value.find((a) => a.id === info.event.id);
         if (apt) {
             apt.start = info.event.start.toISOString().slice(0, 19);
@@ -192,6 +310,10 @@ const calendarOptions = computed(() => ({
 
     // Resize Duration Handler
     eventResize: (info: any) => {
+        if (info.event.extendedProps?.isCluster) {
+            info.revert();
+            return;
+        }
         const apt = appointments.value.find((a) => a.id === info.event.id);
         if (apt && info.event.end) {
             apt.end = info.event.end.toISOString().slice(0, 19);
@@ -214,6 +336,10 @@ const calendarOptions = computed(() => ({
 
     // Click on event card to edit
     eventClick: (clickInfo: any) => {
+        if (clickInfo.event.extendedProps?.isCluster) {
+            handleOpenCluster(clickInfo.event.extendedProps);
+            return;
+        }
         const apt = appointments.value.find((a) => a.id === clickInfo.event.id);
         if (apt) {
             editingAppointment.value = apt;
@@ -223,6 +349,30 @@ const calendarOptions = computed(() => ({
 }));
 
 // 4. Action Handlers
+function handleOpenCluster(props: any) {
+    selectedClusterAppointments.value = props.appointments || [];
+    const first = props.appointments?.[0];
+    const last = props.appointments?.[props.appointments?.length - 1];
+    if (first) {
+        selectedClusterTimeSlot.value = `${formatTime(first.start)} - ${formatTime(last?.end || first.end)} น.`;
+    }
+    isClusterDialogOpen.value = true;
+}
+
+function handleClusterEdit(apt: Appointment) {
+    isClusterDialogOpen.value = false;
+    handleEditAppointment(apt);
+}
+
+function handleClusterBill(apt: Appointment) {
+    isClusterDialogOpen.value = false;
+    handleOpenBilling(apt);
+}
+
+function getBranchColor(branchId: string) {
+    return clinicBranches.find((b) => b.id === branchId)?.color || '#3b82f6';
+}
+
 function handleOpenBilling(aptData: any) {
     const apt = appointments.value.find((a) => a.id === aptData.id);
     if (apt) {
@@ -335,7 +485,31 @@ function handleMarkAsPaid(appointmentId: string) {
                     </Button>
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Overlap Mode Toggle Pill -->
+                    <div class="flex items-center gap-1 rounded-lg border border-border/80 bg-muted/40 p-0.5">
+                        <Button
+                            size="xs"
+                            :variant="isClusterMode ? 'default' : 'ghost'"
+                            class="h-7 gap-1 text-[11px] font-medium px-2.5 shadow-none cursor-pointer"
+                            @click="isClusterMode = true"
+                            title="รวมนัดหมายที่เวลาชนกันเป็น Block เดียว เพื่อให้อ่านข้อมูลง่าย ไม่โดนบีบแคบ"
+                        >
+                            <Users class="size-3" />
+                            <span>รวมการ์ดซ้อนทับ (Cluster)</span>
+                        </Button>
+                        <Button
+                            size="xs"
+                            :variant="!isClusterMode ? 'default' : 'ghost'"
+                            class="h-7 gap-1 text-[11px] font-medium px-2.5 shadow-none cursor-pointer"
+                            @click="isClusterMode = false"
+                            title="แยกนัดหมายออกเป็นหลายคอลัมน์คู่ขนาน"
+                        >
+                            <Move class="size-3" />
+                            <span>แยกคอลัมน์ (Split)</span>
+                        </Button>
+                    </div>
+
                     <Button
                         size="sm"
                         class="h-8 w-full gap-1.5 text-xs font-semibold shadow-xs sm:w-auto"
@@ -390,7 +564,65 @@ function handleMarkAsPaid(appointmentId: string) {
                             </span>
                         </div>
 
-                        <!-- 2. TimeGrid View (Week & Day): Adaptive Container-Aware Clinic Card -->
+                        <!-- 2. Clustered Layout: Shown when 2+ appointments overlap in the same time slot -->
+                        <article
+                            v-else-if="event.extendedProps.isCluster"
+                            class="clinic-cluster-card group border-border/80 bg-gradient-to-br from-card via-card to-primary/5 text-card-foreground hover:border-primary/60 relative flex h-full w-full cursor-pointer flex-col justify-between overflow-hidden rounded-md border text-left shadow-2xs transition-all select-none hover:shadow-xs p-1.5 sm:p-2"
+                            :style="{
+                                borderLeftWidth: '5px',
+                                borderLeftColor: event.extendedProps.branchColors?.[0] || 'var(--primary)',
+                                borderRightWidth: event.extendedProps.branchColors?.[1] ? '4px' : '1px',
+                                borderRightColor: event.extendedProps.branchColors?.[1] || 'var(--border)',
+                            }"
+                            @click.stop="handleOpenCluster(event.extendedProps)"
+                        >
+                            <!-- Cluster Header: Badge + Time -->
+                            <div class="flex items-center justify-between gap-1 border-b border-border/50 pb-1 shrink-0">
+                                <span class="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary sm:text-[10px]">
+                                    <Users class="size-2.5 sm:size-3" />
+                                    <span>{{ event.extendedProps.count }} นัดหมายซ้อนทับ</span>
+                                </span>
+                                <span class="font-mono text-[9px] font-semibold text-muted-foreground shrink-0">
+                                    {{ formatTime(event.start) }}-{{ formatTime(event.end) }}
+                                </span>
+                            </div>
+
+                            <!-- Cluster Body: Micro list of each appointment in the slot -->
+                            <div class="my-1 flex-1 flex flex-col justify-around gap-1 min-w-0">
+                                <div
+                                    v-for="apt in event.extendedProps.appointments"
+                                    :key="apt.id"
+                                    class="flex items-center justify-between gap-1 rounded bg-muted/40 px-1.5 py-0.5 sm:py-1 text-[9px] sm:text-[10px] leading-tight"
+                                >
+                                    <div class="flex items-center gap-1 min-w-0 flex-1">
+                                        <span
+                                            class="size-1.5 sm:size-2 rounded-full shrink-0"
+                                            :style="{ backgroundColor: getBranchColor(apt.branchId) }"
+                                        />
+                                        <span class="font-bold text-foreground truncate">
+                                            {{ apt.patientName }}
+                                        </span>
+                                        <span class="text-muted-foreground text-[8px] sm:text-[9px] truncate">
+                                            • {{ apt.treatment.split(' ')[0] }}
+                                        </span>
+                                    </div>
+                                    <span class="text-muted-foreground text-[8px] sm:text-[9px] font-medium truncate shrink-0">
+                                        👨‍⚕️ {{ apt.doctorName.split(' ')[1] || apt.doctorName }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Cluster Footer: Tap to expand indicator -->
+                            <div class="flex items-center justify-between border-t border-border/50 pt-1 shrink-0 text-[9px] sm:text-[10px] text-primary font-medium">
+                                <span>คลิกเพื่อดูรายละเอียด</span>
+                                <span class="inline-flex items-center gap-0.5 font-bold">
+                                    <span>{{ event.extendedProps.count }} เคส</span>
+                                    <ArrowUpRight class="size-2.5 sm:size-3" />
+                                </span>
+                            </div>
+                        </article>
+
+                        <!-- 3. TimeGrid View (Week & Day): Adaptive Container-Aware Clinic Card -->
                         <article
                             v-else
                             class="clinic-event-card group border-border bg-card text-card-foreground hover:border-primary/40 relative flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-md border text-left shadow-2xs transition-all select-none hover:shadow-xs"
@@ -695,6 +927,15 @@ function handleMarkAsPaid(appointmentId: string) {
             "
             :editing-appointment="editingAppointment"
             @save="handleSaveAppointment"
+        />
+
+        <!-- Concurrent Appointments Detail Dialog -->
+        <ConcurrentAppointmentsDialog
+            v-model:open="isClusterDialogOpen"
+            :appointments="selectedClusterAppointments"
+            :time-slot="selectedClusterTimeSlot"
+            @edit="handleClusterEdit"
+            @bill="handleClusterBill"
         />
     </div>
 </template>

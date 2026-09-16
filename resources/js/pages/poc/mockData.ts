@@ -150,11 +150,12 @@ export function getInitialAppointments(): Appointment[] {
         },
 
         // --- วันพุธ (Wednesday - วันนี้) ---
+        // เคสตัวอย่างที่ 1 (ช่วงเช้า 09:30 - 11:00): หมอ 2 ท่านทำหัตถการในเวลาเดียวกันตรงเป๊ะ
         {
             id: 'apt-wed-1',
             title: 'จัดฟันใส Invisalign Follow-up',
-            start: `${wedStr}T09:00:00`,
-            end: `${wedStr}T10:30:00`,
+            start: `${wedStr}T09:30:00`,
+            end: `${wedStr}T11:00:00`,
             branchId: 'b1',
             patientName: 'นางสาว แพรวา วงศ์สว่าง',
             patientPhone: '089-876-5432',
@@ -165,22 +166,25 @@ export function getInitialAppointments(): Appointment[] {
             notes: 'รับถาด Invisalign ชุดที่ 8'
         },
         {
-            id: 'apt-wed-2',
-            title: 'อุดฟันคอมโพสิต 2 ซี่',
-            start: `${wedStr}T11:00:00`,
-            end: `${wedStr}T12:15:00`,
+            id: 'apt-wed-concurrent-am',
+            title: 'ผ่าฟันคุด กรามล่างขวา',
+            start: `${wedStr}T09:30:00`,
+            end: `${wedStr}T11:00:00`,
             branchId: 'b2',
-            patientName: 'นาย ธนพล รัตนโกสินทร์',
-            patientPhone: '086-777-8899',
-            doctorName: 'ทพ. ภัทร วาจาสัตย์',
-            treatment: 'อุดฟันคอมโพสิต (Composite Filling)',
-            price: 3000,
-            status: 'pending_bill'
+            patientName: 'นาย อนันต์ ทวีทรัพย์',
+            patientPhone: '081-777-6655',
+            doctorName: 'ทพ. ธนกฤต มั่นคง',
+            treatment: 'ผ่าฟันคุด (Wisdom Tooth Surgery)',
+            price: 2800,
+            status: 'pending_bill',
+            notes: 'เคสฉุกเฉิน นัดผ่าฟันคุดพร้อมกันช่วงเช้า'
         },
+
+        // เคสตัวอย่างที่ 2 (ช่วงบ่าย 14:00 - 15:30): หมอ 2 ท่านทำหัตถการในเวลาเดียวกัน
         {
-            id: 'apt-wed-3',
+            id: 'apt-wed-2',
             title: 'ขูดหินปูน & ขัดฟัน',
-            start: `${wedStr}T14:30:00`,
+            start: `${wedStr}T14:00:00`,
             end: `${wedStr}T15:30:00`,
             branchId: 'b3',
             patientName: 'นาย สิทธิชัย วัฒนานนท์',
@@ -189,6 +193,19 @@ export function getInitialAppointments(): Appointment[] {
             treatment: 'ขูดหินปูน & ขัดฟัน (Scaling)',
             price: 900,
             status: 'paid'
+        },
+        {
+            id: 'apt-wed-concurrent-pm',
+            title: 'อุดฟันคอมโพสิต 2 ซี่',
+            start: `${wedStr}T14:00:00`,
+            end: `${wedStr}T15:30:00`,
+            branchId: 'b1',
+            patientName: 'นาย ธนพล รัตนโกสินทร์',
+            patientPhone: '086-777-8899',
+            doctorName: 'ทพ. ธนกฤต มั่นคง',
+            treatment: 'อุดฟันคอมโพสิต (Composite Filling)',
+            price: 3000,
+            status: 'pending_bill'
         },
         {
             id: 'apt-wed-4',
