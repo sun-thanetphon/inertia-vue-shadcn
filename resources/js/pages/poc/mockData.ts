@@ -71,95 +71,62 @@ export const treatmentOptions = [
  */
 export function getInitialAppointments(): Appointment[] {
     const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    const dateStr = `${y}-${m}-${d}`;
+    // Helper to get formatted date string for an offset from today
+    const getOffsetDate = (offsetDays: number) => {
+        const d = new Date(now);
+        d.setDate(d.getDate() + offsetDays);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    };
 
-    // Tomorrow
-    const tom = new Date(now);
-    tom.setDate(tom.getDate() + 1);
-    const tomStr = `${tom.getFullYear()}-${String(tom.getMonth() + 1).padStart(2, '0')}-${String(tom.getDate()).padStart(2, '0')}`;
+    // Current week dates: Sunday to Saturday
+    const currentDay = now.getDay(); // 0 = Sun, 1 = Mon, ..., 3 = Wed
+    const monStr = getOffsetDate(1 - currentDay);
+    const tueStr = getOffsetDate(2 - currentDay);
+    const wedStr = getOffsetDate(3 - currentDay);
+    const thuStr = getOffsetDate(4 - currentDay);
+    const friStr = getOffsetDate(5 - currentDay);
+    const satStr = getOffsetDate(6 - currentDay);
 
     return [
-        // Branch 1 - สยามสแควร์
+        // --- วันจันทร์ (Monday) ---
         {
-            id: 'apt-101',
+            id: 'apt-mon-1',
             title: 'ขูดหินปูน & ขัดฟัน',
-            start: `${dateStr}T09:00:00`,
-            end: `${dateStr}T10:00:00`,
+            start: `${monStr}T09:00:00`,
+            end: `${monStr}T10:00:00`,
             branchId: 'b1',
             patientName: 'นาย สมชาย ใจดี',
             patientPhone: '081-234-5678',
             doctorName: 'ทพ. ภัทร วาจาสัตย์',
             treatment: 'ขูดหินปูน & ขัดฟัน (Scaling)',
             price: 900,
-            status: 'pending_bill',
-            notes: 'คนไข้มีเสียวฟันบริเวณกรามล่างซ้าย'
+            status: 'paid',
+            notes: 'คนไข้ประจำ ตรวจฟันประจำปี'
         },
         {
-            id: 'apt-102',
-            title: 'จัดฟันใส Invisalign Follow-up',
-            start: `${dateStr}T11:00:00`,
-            end: `${dateStr}T12:30:00`,
-            branchId: 'b1',
-            patientName: 'นางสาว แพรวา วงศ์สว่าง',
-            patientPhone: '089-876-5432',
-            doctorName: 'ทพญ. นภัสสร ศิริมงคล',
-            treatment: 'จัดฟันใส Invisalign (Consultation)',
-            price: 3500,
-            status: 'confirmed',
-            notes: 'ตรวจรับถาดชุดที่ 8'
-        },
-        {
-            id: 'apt-103',
-            title: 'ฟอกสีฟัน Cool Light',
-            start: `${dateStr}T14:00:00`,
-            end: `${dateStr}T15:30:00`,
-            branchId: 'b1',
-            patientName: 'นาย กิตติศักดิ์ พรหมดี',
-            patientPhone: '085-111-2233',
-            doctorName: 'ทพญ. นภัสสร ศิริมงคล',
-            treatment: 'ฟอกสีฟัน Cool Light (Whitening)',
-            price: 4900,
-            status: 'pending_bill'
-        },
-
-        // Branch 2 - อารีย์ (วันเดียวกัน เคสแตกต่างกันเพื่อทดสอบ Filter)
-        {
-            id: 'apt-201',
+            id: 'apt-mon-2',
             title: 'ผ่าฟันคุด กรามล่างขวา',
-            start: `${dateStr}T09:30:00`,
-            end: `${dateStr}T11:00:00`,
+            start: `${monStr}T13:30:00`,
+            end: `${monStr}T15:00:00`,
             branchId: 'b2',
             patientName: 'นางสาว ณิชา เจริญสุข',
             patientPhone: '082-456-7890',
             doctorName: 'ทพ. ธนกฤต มั่นคง',
             treatment: 'ผ่าฟันคุด (Wisdom Tooth Surgery)',
             price: 2800,
-            status: 'pending_bill',
-            notes: 'คนไข้แพ้ยา Penicillin'
-        },
-        {
-            id: 'apt-202',
-            title: 'อุดฟันคอมโพสิต 2 ซี่',
-            start: `${dateStr}T13:00:00`,
-            end: `${dateStr}T14:15:00`,
-            branchId: 'b2',
-            patientName: 'นาย ธนพล รัตนโกสินทร์',
-            patientPhone: '086-777-8899',
-            doctorName: 'ทพ. ภัทร วาจาสัตย์',
-            treatment: 'อุดฟันคอมโพสิต (Composite Filling)',
-            price: 3000,
-            status: 'confirmed'
+            status: 'paid',
+            notes: 'นัดตัดไหมสัปดาห์หน้า'
         },
 
-        // Branch 3 - ทองหล่อ (วันเดียวกัน เคสแตกต่างกัน)
+        // --- วันอังคาร (Tuesday) ---
         {
-            id: 'apt-301',
+            id: 'apt-tue-1',
             title: 'รักษารากฟัน ครั้งที่ 1',
-            start: `${dateStr}T10:00:00`,
-            end: `${dateStr}T11:30:00`,
+            start: `${tueStr}T10:00:00`,
+            end: `${tueStr}T11:30:00`,
             branchId: 'b3',
             patientName: 'คุณ วิภาดา ศรีสวัสดิ์',
             patientPhone: '083-999-0011',
@@ -169,10 +136,52 @@ export function getInitialAppointments(): Appointment[] {
             status: 'pending_bill'
         },
         {
-            id: 'apt-302',
+            id: 'apt-tue-2',
+            title: 'ฟอกสีฟัน Cool Light',
+            start: `${tueStr}T14:00:00`,
+            end: `${tueStr}T15:30:00`,
+            branchId: 'b1',
+            patientName: 'นาย กิตติศักดิ์ พรหมดี',
+            patientPhone: '085-111-2233',
+            doctorName: 'ทพญ. นภัสสร ศิริมงคล',
+            treatment: 'ฟอกสีฟัน Cool Light (Whitening)',
+            price: 4900,
+            status: 'pending_bill'
+        },
+
+        // --- วันพุธ (Wednesday - วันนี้) ---
+        {
+            id: 'apt-wed-1',
+            title: 'จัดฟันใส Invisalign Follow-up',
+            start: `${wedStr}T09:00:00`,
+            end: `${wedStr}T10:30:00`,
+            branchId: 'b1',
+            patientName: 'นางสาว แพรวา วงศ์สว่าง',
+            patientPhone: '089-876-5432',
+            doctorName: 'ทพญ. นภัสสร ศิริมงคล',
+            treatment: 'จัดฟันใส Invisalign (Consultation)',
+            price: 3500,
+            status: 'confirmed',
+            notes: 'รับถาด Invisalign ชุดที่ 8'
+        },
+        {
+            id: 'apt-wed-2',
+            title: 'อุดฟันคอมโพสิต 2 ซี่',
+            start: `${wedStr}T11:00:00`,
+            end: `${wedStr}T12:15:00`,
+            branchId: 'b2',
+            patientName: 'นาย ธนพล รัตนโกสินทร์',
+            patientPhone: '086-777-8899',
+            doctorName: 'ทพ. ภัทร วาจาสัตย์',
+            treatment: 'อุดฟันคอมโพสิต (Composite Filling)',
+            price: 3000,
+            status: 'pending_bill'
+        },
+        {
+            id: 'apt-wed-3',
             title: 'ขูดหินปูน & ขัดฟัน',
-            start: `${dateStr}T15:00:00`,
-            end: `${dateStr}T16:00:00`,
+            start: `${wedStr}T14:30:00`,
+            end: `${wedStr}T15:30:00`,
             branchId: 'b3',
             patientName: 'นาย สิทธิชัย วัฒนานนท์',
             patientPhone: '084-222-3344',
@@ -181,13 +190,27 @@ export function getInitialAppointments(): Appointment[] {
             price: 900,
             status: 'paid'
         },
-
-        // Tomorrow Cases
         {
-            id: 'apt-104',
+            id: 'apt-wed-4',
+            title: 'ฟอกสีฟัน Cool Light',
+            start: `${wedStr}T16:30:00`,
+            end: `${wedStr}T17:45:00`,
+            branchId: 'b1',
+            patientName: 'นางสาว พัชรากร สินธุ',
+            patientPhone: '081-555-4321',
+            doctorName: 'ทพญ. นภัสสร ศิริมงคล',
+            treatment: 'ฟอกสีฟัน Cool Light (Whitening)',
+            price: 4900,
+            status: 'paid',
+            notes: 'ตรวจติดตามหลังฟอกสีฟัน 6 เดือน'
+        },
+
+        // --- วันพฤหัสบดี (Thursday) ---
+        {
+            id: 'apt-thu-1',
             title: 'จัดฟันใส เช็กความคืบหน้า',
-            start: `${tomStr}T10:30:00`,
-            end: `${tomStr}T11:30:00`,
+            start: `${thuStr}T10:30:00`,
+            end: `${thuStr}T11:30:00`,
             branchId: 'b1',
             patientName: 'นาย พงศกร มหัทธนะ',
             patientPhone: '081-999-8888',
@@ -195,6 +218,88 @@ export function getInitialAppointments(): Appointment[] {
             treatment: 'จัดฟันใส Invisalign (Consultation)',
             price: 3500,
             status: 'confirmed'
+        },
+        {
+            id: 'apt-thu-2',
+            title: 'ตรวจสุขภาพฟัน & X-Ray',
+            start: `${thuStr}T13:30:00`,
+            end: `${thuStr}T14:30:00`,
+            branchId: 'b2',
+            patientName: 'นางสาว วรรณภา มณีรัตน์',
+            patientPhone: '089-333-4455',
+            doctorName: 'ทพ. ธนกฤต มั่นคง',
+            treatment: 'ตรวจสุขภาพช่องปาก & ถ่ายภาพรังสี',
+            price: 1200,
+            status: 'pending_bill'
+        },
+
+        // --- วันศุกร์ (Friday) ---
+        {
+            id: 'apt-fri-1',
+            title: 'รักษารากฟัน ครั้งที่ 2',
+            start: `${friStr}T09:30:00`,
+            end: `${friStr}T11:00:00`,
+            branchId: 'b3',
+            patientName: 'นาย จิรายุ เด่นชัย',
+            patientPhone: '087-555-6677',
+            doctorName: 'ทพ. ธนกฤต มั่นคง',
+            treatment: 'รักษารากฟัน (Root Canal Treatment)',
+            price: 6500,
+            status: 'pending_bill'
+        },
+        {
+            id: 'apt-fri-2',
+            title: 'อุดฟันคอมโพสิต',
+            start: `${friStr}T13:00:00`,
+            end: `${friStr}T14:15:00`,
+            branchId: 'b1',
+            patientName: 'นางสาว กมลชนก สุขใจ',
+            patientPhone: '088-123-9988',
+            doctorName: 'ทพ. ภัทร วาจาสัตย์',
+            treatment: 'อุดฟันคอมโพสิต (Composite Filling)',
+            price: 1500,
+            status: 'paid'
+        },
+
+        // --- วันเสาร์ (Saturday) ---
+        {
+            id: 'apt-sat-1',
+            title: 'จัดฟันใส Invisalign Consultation',
+            start: `${satStr}T09:30:00`,
+            end: `${satStr}T11:00:00`,
+            branchId: 'b1',
+            patientName: 'นางสาว ธนัญญา โชคอนันต์',
+            patientPhone: '082-888-9900',
+            doctorName: 'ทพญ. นภัสสร ศิริมงคล',
+            treatment: 'จัดฟันใส Invisalign (Consultation)',
+            price: 5000,
+            status: 'pending_bill'
+        },
+        {
+            id: 'apt-sat-2',
+            title: 'ฟอกสีฟัน Cool Light',
+            start: `${satStr}T11:30:00`,
+            end: `${satStr}T13:00:00`,
+            branchId: 'b3',
+            patientName: 'นาย อนุพงศ์ ชัยชนะ',
+            patientPhone: '081-444-5566',
+            doctorName: 'ทพ. ภัทร วาจาสัตย์',
+            treatment: 'ฟอกสีฟัน Cool Light (Whitening)',
+            price: 4900,
+            status: 'confirmed'
+        },
+        {
+            id: 'apt-sat-3',
+            title: 'ผ่าฟันคุด กรามบนซ้าย',
+            start: `${satStr}T14:00:00`,
+            end: `${satStr}T15:30:00`,
+            branchId: 'b2',
+            patientName: 'นาย วรภัทร สุขสมบัติ',
+            patientPhone: '083-666-7788',
+            doctorName: 'ทพ. ธนกฤต มั่นคง',
+            treatment: 'ผ่าฟันคุด (Wisdom Tooth Surgery)',
+            price: 2800,
+            status: 'pending_bill'
         }
     ];
 }

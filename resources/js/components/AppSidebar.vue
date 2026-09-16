@@ -82,18 +82,6 @@ const footerNavItems: NavItem[] = [
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton
-                            as-child
-                            :is-active="isCurrentUrl('/poc/vue-cal')"
-                            tooltip="Vue-Cal"
-                        >
-                            <Link href="/poc/vue-cal">
-                                <CalendarDays class="size-4" />
-                                <span>Vue-Cal</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarGroup>
         </SidebarContent>

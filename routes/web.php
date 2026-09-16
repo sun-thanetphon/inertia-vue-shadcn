@@ -11,7 +11,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // PoC Calendars
     Route::inertia('poc/fullcalendar', 'poc/FullCalendar/Index')->name('poc.fullcalendar');
-    Route::inertia('poc/vue-cal', 'poc/VueCal/Index')->name('poc.vue-cal');
 });
 
 require __DIR__ . '/settings.php';
