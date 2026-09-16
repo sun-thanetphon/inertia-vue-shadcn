@@ -9,17 +9,12 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import {
-    LoaderCircle,
-    IdCard,
-    User,
-    Calendar,
-    MapPin,
-    ShieldAlert,
-} from "lucide-vue-next";
+import { LoaderCircle, IdCard, User, ShieldAlert } from "lucide-vue-next";
 
+// รับ props เพิ่มเติม ทั้ง cardData และ error จาก Controller
 const props = defineProps<{
     cardData?: any;
+    error?: string;
 }>();
 
 const { execute, isLoading } = useAsyncState(
@@ -84,6 +79,22 @@ defineOptions({
             </Button>
         </div>
 
+        <!-- แจ้งเตือนกรณีเกิดข้อผิดพลาด เช่น ไม่ได้เสียบบัตร -->
+        <Card
+            v-if="props.error && !isLoading"
+            class="border-destructive/50 bg-destructive/10 text-destructive"
+        >
+            <CardContent class="flex items-center gap-3 py-4">
+                <ShieldAlert class="h-5 w-5 flex-shrink-0" />
+                <div>
+                    <h4 class="font-semibold text-sm">
+                        ไม่สามารถอ่านข้อมูลบัตรได้
+                    </h4>
+                    <p class="text-xs opacity-90 mt-0.5">{{ props.error }}</p>
+                </div>
+            </CardContent>
+        </Card>
+
         <Card v-if="isLoading" class="border-dashed">
             <CardContent
                 class="flex flex-col items-center justify-center py-16 text-center"
@@ -93,8 +104,8 @@ defineOptions({
                 />
                 <h3 class="font-semibold text-lg">กำลังประมวลผลข้อมูล</h3>
                 <p class="text-sm text-muted-foreground max-w-sm mt-1">
-                    กรุณารอสักครู่ ระบบกำลังดึงข้อมูลจากเครื่องอ่านบัตรประชาชน
-                    (จำลองเวลา 5 วินาที)...
+                    กรุณารอสักครู่ ระบบกำลังดึงข้อมูลจริงจากเครื่องอ่านบัตรผ่าน
+                    Spring Boot...
                 </p>
             </CardContent>
         </Card>
@@ -135,8 +146,8 @@ defineOptions({
                         >ชื่อ-นามสกุล (ภาษาไทย)</span
                     >
                     <p class="text-base font-semibold">
-                        {{ props.cardData.prefix_th
-                        }}{{ props.cardData.firstname_th }}
+                        {{ props.cardData.prefix_th }}
+                        {{ props.cardData.firstname_th }}
                         {{ props.cardData.lastname_th }}
                     </p>
                 </div>
@@ -201,7 +212,7 @@ defineOptions({
             </CardContent>
         </Card>
 
-        <Card v-else class="border-dashed bg-card/50">
+        <Card v-else-if="!props.error" class="border-dashed bg-card/50">
             <CardContent
                 class="flex flex-col items-center justify-center py-20 text-center"
             >
@@ -212,7 +223,7 @@ defineOptions({
                 </div>
                 <h3 class="font-semibold text-lg">ยังไม่มีข้อมูลการอ่านบัตร</h3>
                 <p class="text-sm text-muted-foreground max-w-sm mt-1">
-                    กรุณาเสียบับตรเข้าเครื่องอ่าน และกดปุ่ม
+                    กรุณาเสียบบัตรเข้าเครื่องอ่าน และกดปุ่ม
                     <span class="font-medium text-foreground"
                         >"อ่านข้อมูลบัตร"</span
                     >

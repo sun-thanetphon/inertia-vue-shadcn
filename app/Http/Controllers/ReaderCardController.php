@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
 
 class ReaderCardController extends Controller
@@ -36,27 +37,24 @@ class ReaderCardController extends Controller
      */
     public function show(string $id)
     {
-        sleep(5);
+        $cardData = null;
+        $errorMessage = null;
 
-        $mockCardData = [
-            'national_id' => "1189500695886",
-            'prefix_th' => 'นาย',
-            'firstname_th' => 'ธเนศพล',
-            'lastname_th' => 'โหนกระสวย',
-            'prefix_en' => 'Mr.',
-            'firstname_en' => 'Thanetphon',
-            'lastname_en' => 'honkasuay',
-            'birth_date' => '1990-05-15',
-            'gender' => 'ชาย',
-            'address' => '123/45 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพมหานคร 10110',
-            'issue_date' => '2020-01-01',
-            'expire_date' => '2030-12-31',
-            'chip_id' => 'THID987654321098',
-        ];
+        try {
+            $response = Http::timeout(10)->get('http://localhost:8080/api/readers/read');
 
+            if ($response->successful() && $response->json('status') === 'success') {
+                $cardData = $response->json('data');
+            } else {
+                $errorMessage = $response->json('message') ?? 'เกิดข้อผิดพลาดในการอ่านบัตร';
+            }
+        } catch (\Exception $e) {
+            $errorMessage = 'ไม่สามารถเชื่อมต่อกับ Service อ่านบัตรได้: ' . $e->getMessage();
+        }
 
         return Inertia::render('ReaderCards/Index', [
-            'cardData' => $mockCardData
+            'cardData' => $cardData,
+            'error' => $errorMessage
         ]);
     }
 
