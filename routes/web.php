@@ -13,6 +13,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // PoC Calendars
     Route::inertia('poc/fullcalendar', 'poc/FullCalendar/Index')->name('poc.fullcalendar');
+
+    // PoC Digital Signatures
+    Route::inertia('poc/signature', 'poc/signature_pad/Index')->name('poc.signature');
+    Route::inertia('poc/signature/signature-pad', 'poc/signature_pad/Index')->name('poc.signature.pad');
 });
 
 require __DIR__ . '/settings.php';

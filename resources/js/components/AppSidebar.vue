@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from "@inertiajs/vue3";
-import { BookOpen, Calendar, FolderGit2, LayoutGrid, Users, IdCard } from "@lucide/vue";
+import { BookOpen, Calendar, FolderGit2, LayoutGrid, Users, IdCard, PenTool } from "@lucide/vue";
 import AppLogo from "@/components/AppLogo.vue";
 import NavFooter from "@/components/NavFooter.vue";
 import NavMain from "@/components/NavMain.vue";
@@ -73,7 +73,7 @@ const footerNavItems: NavItem[] = [
             <NavMain :items="mainNavItems" />
 
             <SidebarGroup class="px-2 py-0">
-                <SidebarGroupLabel>PoC Calendar</SidebarGroupLabel>
+                <SidebarGroupLabel>PoC Features</SidebarGroupLabel>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton
@@ -84,6 +84,18 @@ const footerNavItems: NavItem[] = [
                             <Link href="/poc/fullcalendar">
                                 <Calendar class="size-4" />
                                 <span>FullCalendar</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            as-child
+                            :is-active="isCurrentUrl('/poc/signature')"
+                            tooltip="PoC ลายเซ็นดิจิทัล (Signatures)"
+                        >
+                            <Link href="/poc/signature">
+                                <PenTool class="size-4" />
+                                <span>เซ็นชื่อดิจิทัล (PoC)</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
