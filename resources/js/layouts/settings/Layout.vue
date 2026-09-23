@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { Building2, Palette, Shield, User } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
+import { edit as editClinic } from '@/routes/clinic';
 import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import type { NavItem } from '@/types';
@@ -14,14 +16,22 @@ const sidebarNavItems: NavItem[] = [
     {
         title: 'Profile',
         href: editProfile(),
+        icon: User,
     },
     {
         title: 'Security',
         href: editSecurity(),
+        icon: Shield,
     },
     {
         title: 'Appearance',
         href: editAppearance(),
+        icon: Palette,
+    },
+    {
+        title: 'Clinic',
+        href: editClinic(),
+        icon: Building2,
     },
 ];
 
@@ -51,9 +61,9 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
                         ]"
                         as-child
                     >
-                        <Link :href="item.href">
-                            <component :is="item.icon" class="h-4 w-4" />
-                            {{ item.title }}
+                        <Link :href="item.href" class="flex items-center gap-2">
+                            <component :is="item.icon" v-if="item.icon" class="h-4 w-4 shrink-0" />
+                            <span>{{ item.title }}</span>
                         </Link>
                     </Button>
                 </nav>

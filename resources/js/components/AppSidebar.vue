@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from "@inertiajs/vue3";
-import { BookOpen, Calendar, FolderGit2, LayoutGrid, Users, IdCard, PenTool } from "@lucide/vue";
+import { BookOpen, Calendar, FolderGit2, LayoutGrid, Users, IdCard, PenTool, Settings2 } from "@lucide/vue";
 import AppLogo from "@/components/AppLogo.vue";
 import NavFooter from "@/components/NavFooter.vue";
 import NavMain from "@/components/NavMain.vue";
@@ -38,6 +38,11 @@ const mainNavItems: NavItem[] = [
         title: "อ่านบัตร",
         href: "/readers",
         icon: IdCard,
+    },
+    {
+        title: "ตั้งค่าคลินิก",
+        href: "/settings/clinic",
+        icon: Settings2,
     },
 ];
 
